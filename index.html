@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Noircash — AI Reward Protocol</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background-color: #0c0c0c;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    ::selection { background-color: rgba(61,129,227,0.3); color: #fff; }
+
+    /* LIQUID GLASS */
+    .liquid-glass {
+      background: rgba(255,255,255,0.01);
+      backdrop-filter: blur(4px);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .liquid-glass::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      padding: 1.4px;
+      background: linear-gradient(180deg,
+        rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%,
+        rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+        rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* ANIMATIONS */
+    @keyframes shiny {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity:1; } 50% { opacity:0.3; }
+    }
+    @keyframes fadeInUp {
+      from { opacity:0; transform:translateY(20px); filter:blur(6px); }
+      to   { opacity:1; transform:translateY(0);    filter:blur(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity:0; } to { opacity:1; }
+    }
+    @keyframes slideDown {
+      from { opacity:0; transform:translateY(-20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+    .anim-nav    { animation: fadeIn 0.6s ease both; }
+    .anim-tag    { animation: fadeInUp 0.5s 0.1s ease both; }
+    .anim-h1     { animation: fadeInUp 0.8s 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+    .anim-p      { animation: fadeInUp 0.6s 0.5s ease both; }
+    .anim-form   { animation: fadeInUp 0.6s 0.7s ease both; }
+    .anim-bar    { animation: fadeIn 0.5s 0.9s ease both; }
+
+    .gradient-text {
+      background-image: linear-gradient(to right,
+        #091020 0%, #0B2551 12.5%, #A4F4FD 32.5%,
+        #00d2ff 50%, #0B2551 67.5%, #091020 87.5%, #091020 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      animation: shiny 6s linear infinite;
+    }
+
+    /* FIXED BG */
+    .fixed-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    }
+    .fixed-bg video {
+      width:100%; height:100%; object-fit:cover; opacity:0.9;
+    }
+    .fixed-bg-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(12,12,12,0.4) 0%, transparent 50%, rgba(12,12,12,0.9) 100%);
+      z-index: 1;
+    }
+
+    /* TRACK LINES */
+    .track-line {
+      display: none;
+      pointer-events: none; position: fixed; top:0; bottom:0; width:1px;
+      background: rgba(255,255,255,0.1); z-index: 5;
+    }
+    @media (min-width:768px) { .track-line { display:block; } }
+    .track-left  { left: calc(50% - 36rem); }
+    .track-right { left: calc(50% + 36rem); }
+
+    /* SVG hidden filter */
+    .svg-filters { position:absolute; width:0; height:0; pointer-events:none; opacity:0; }
+
+    /* NAVBAR */
+    nav {
+      position: relative; z-index: 50;
+      max-width: 72rem; margin: 0 auto;
+      padding: 0 1.5rem; height: 5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0,0,0,0.10); backdrop-filter: blur(8px);
+    }
+    .nav-logo { display:flex; align-items:center; }
+    .nav-links { display:none; align-items:center; gap:2rem; }
+    @media (min-width:768px) { .nav-links { display:flex; } }
+    .nav-links a {
+      color: rgba(255,255,255,0.7); font-size:0.875rem; font-weight:500;
+      letter-spacing:0.05em; text-decoration:none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color:#fff; }
+
+    /* APPLE BUTTON */
+    .apple-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap:0.5rem;
+      border-radius: 9999px; background:#fff; color:#000;
+      font-weight:500; font-size:0.875rem; padding:0.75rem 1.25rem;
+      border:none; cursor:pointer; transition: background 0.2s, transform 0.1s;
+      text-decoration: none;
+    }
+    .apple-btn:hover { background:rgba(255,255,255,0.9); }
+    .apple-btn:active { transform:scale(0.98); }
+    .apple-btn.full { width:100%; }
+    .apple-btn svg.chevron { transition: transform 0.3s; }
+    .apple-btn:hover svg.chevron { transform: translateX(4px); }
+
+    /* MOBILE MENU BTN */
+    .mobile-menu-btn {
+      display:flex; align-items:center; justify-content:center;
+      width:2.5rem; height:2.5rem; border-radius:9999px;
+      border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);
+      cursor:pointer; transition:transform 0.1s;
+    }
+    @media (min-width:768px) { .mobile-menu-btn { display:none; } }
+    .nav-cta { display:none; }
+    @media (min-width:768px) { .nav-cta { display:block; } }
+
+    /* MOBILE DRAWER */
+    #mobile-drawer {
+      display:none; position:absolute; top:5rem; left:0; width:100%;
+      background:rgba(12,12,12,0.95); border-bottom:1px solid rgba(255,255,255,0.1);
+      backdrop-filter:blur(20px); z-index:40; padding:2rem 1.5rem;
+      flex-direction:column; gap:1.5rem;
+    }
+    #mobile-drawer.open { display:flex; animation: slideDown 0.25s ease both; }
+    #mobile-drawer a { color:rgba(255,255,255,0.8); font-size:1rem; font-weight:500; text-decoration:none; }
+
+    /* HERO */
+    .hero {
+      position:relative; z-index:10;
+      max-width:56rem; margin:0 auto; padding:4rem 1.5rem 5rem;
+      text-align:center; display:flex; flex-direction:column; align-items:center;
+    }
+    @media (min-width:768px) { .hero { padding-top:7rem; } }
+
+    .hero-tag {
+      display:inline-flex; align-items:center; gap:0.5rem;
+      padding:0.25rem 0.75rem; border-radius:9999px;
+      border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.02);
+      font-size:0.6875rem; font-weight:600; letter-spacing:0.15em;
+      color:rgba(255,255,255,0.6); text-transform:uppercase; margin-bottom:2rem;
+    }
+    .hero-tag .dot { width:0.5rem; height:0.5rem; border-radius:9999px; background:#22d3ee; animation:pulse-dot 2s infinite; }
+
+    h1 {
+      font-size:2.5rem; font-weight:600; letter-spacing:-0.03em; line-height:1.05;
+    }
+    @media (min-width:768px) { h1 { font-size:4.5rem; } }
+
+    .hero-sub {
+      margin-top:2rem; color:rgba(255,255,255,0.6);
+      max-width:28rem; font-size:0.875rem; line-height:1.6; letter-spacing:0.02em;
+    }
+    @media (min-width:768px) { .hero-sub { font-size:1rem; } }
+
+    /* WAITLIST FORM */
+    .waitlist-form {
+      margin-top:2.5rem; width:100%; max-width:24rem;
+      display:flex; flex-direction:column; gap:0.75rem;
+    }
+    .waitlist-form input {
+      width:100%; background:rgba(255,255,255,0.02);
+      border:1px solid rgba(255,255,255,0.1); border-radius:0.75rem;
+      padding:0.75rem 1rem; font-size:0.875rem; font-weight:300;
+      color:#fff; outline:none; font-family:inherit;
+      transition: border-color 0.2s;
+    }
+    .waitlist-form input::placeholder { color:rgba(255,255,255,0.2); }
+    .waitlist-form input:focus { border-color:rgba(255,255,255,0.3); }
+    .form-note {
+      display:block; margin-top:1rem; font-size:0.625rem;
+      letter-spacing:0.15em; color:rgba(255,255,255,0.4); text-transform:uppercase;
+    }
+
+    .success-card {
+      padding:1.25rem; border-radius:1rem;
+      border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.02);
+      backdrop-filter:blur(12px); text-align:center;
+    }
+    .success-card h4 { font-size:0.875rem; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; margin-bottom:0.25rem; }
+    .success-card p  { color:rgba(255,255,255,0.5); font-size:0.75rem; }
+
+    /* CURSOR BLINK */
+    .cursor { display:inline-block; width:2px; height:1em; background:#fff; margin-left:2px; animation:blink 0.7s step-end infinite; vertical-align:text-bottom; }
+
+    /* MACOS BAR */
+    .macos-bar {
+      width:100%; height:2.5rem;
+      background:rgba(0,0,0,0.0);
+      position:relative; z-index:20;
+      display:none;
+    }
+    .macos-bar-inner {
+      max-width:72rem; margin:0 auto; padding:0 1.5rem;
+      height:100%; display:flex; align-items:center; justify-content:space-between;
+      font-size:0.6875rem; font-weight:500; color:rgba(255,255,255,0.6); letter-spacing:0.1em;
+    }
+    .macos-left { display:flex; align-items:center; gap:1.25rem; }
+    .macos-left span { display:none; cursor:pointer; }
+    .macos-left span:hover { color:#fff; }
+    .macos-left .brand { font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:0.15em; }
+    @media (min-width:640px)  { .macos-left .sm  { display:inline; } }
+    @media (min-width:768px)  { .macos-left .md  { display:inline; } }
+    .macos-right { display:flex; align-items:center; gap:1rem; }
+    .macos-right span { cursor:pointer; }
+    .macos-right span:hover { color:#fff; }
+    .status-dot { display:inline-flex; align-items:center; gap:0.375rem; }
+    .status-dot::before { content:''; display:inline-block; width:0.375rem; height:0.375rem; border-radius:9999px; background:#22d3ee; animation:pulse-dot 2s infinite; }
+
+    /* SECTION EYEBROW */
+    .eyebrow {
+      display:flex; align-items:center; gap:0.75rem;
+      justify-content:center;
+    }
+    .eyebrow .dot { width:0.375rem; height:0.375rem; border-radius:9999px; background:#fff; animation:pulse-dot 2s infinite; }
+    .eyebrow .label { font-size:0.75rem; font-weight:600; letter-spacing:0.2em; text-transform:uppercase; color:rgba(255,255,255,0.8); }
+    .eyebrow .tag {
+      padding:0.125rem 0.5rem; border-radius:9999px;
+      border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.02);
+      font-size:0.625rem; font-weight:500; text-transform:uppercase; letter-spacing:0.1em;
+      color:rgba(255,255,255,0.5);
+    }
+
+    /* PRICING SECTION */
+    .pricing-section {
+      position:relative; padding:2.5rem 1.25rem 5rem;
+      display:flex; flex-direction:column; align-items:center; overflow-x:hidden;
+      z-index: 10;
+    }
+    .watermark-container {
+      position:relative; width:100%; max-width:68.75rem;
+      text-align:center; margin-top:2.5rem; z-index:2;
+    }
+    .watermark-main {
+      font-size:9rem; font-weight:800; line-height:0.9; letter-spacing:-0.05em;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    @media (max-width:1024px) { .watermark-main { font-size:3.5rem; } }
+    .watermark-line-1 { color:#fff; }
+    .watermark-line-2 {
+      background:linear-gradient(to right,#091020 0%,#0B2551 25%,#A4F4FD 65%,#00d2ff 100%);
+      -webkit-background-clip:text; background-clip:text;
+      color:transparent; -webkit-text-fill-color:transparent;
+    }
+
+    /* TOGGLE */
+    .toggle-wrap {
+      display:flex; align-items:center; justify-content:flex-end; gap:0.75rem;
+      width:100%; max-width:68.75rem; margin-top:2rem; padding-right:1.25rem;
+    }
+    @media (max-width:1024px) { .toggle-wrap { justify-content:center; padding-right:0; } }
+    .toggle-label { font-size:0.8125rem; color:rgba(255,255,255,0.6); }
+    .toggle-btn {
+      width:3.25rem; height:1.75rem; background:#fff; border-radius:9999px;
+      position:relative; cursor:pointer; border:none; padding:0;
+      transition:background 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .toggle-knob {
+      width:1.25rem; height:1.25rem; background:#000; border-radius:9999px;
+      position:absolute; top:0.25rem; left:0.25rem;
+      transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .toggle-btn.active { background:rgba(255,255,255,0.2); }
+    .toggle-btn.active .toggle-knob { transform:translateX(1.5rem); background:#fff; }
+
+    /* PRICING GRID */
+    .pricing-grid {
+      display:grid; grid-template-columns:repeat(2,1fr); gap:1.5rem;
+      width:100%; max-width:68.75rem; margin-top:3.75rem;
+      position:relative; z-index:3;
+    }
+    @media (max-width:1024px) {
+      .pricing-grid {
+        display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+        width:100vw; padding:0 1.25rem; gap:1rem; scrollbar-width:none;
+      }
+      .pricing-grid::-webkit-scrollbar { display:none; }
+    }
+
+    .pricing-card {
+      background:linear-gradient(135deg,rgba(0,0,0,0.7),rgba(0,0,0,0.4));
+      backdrop-filter:blur(14px) brightness(0.91);
+      border:1px solid rgba(255,255,255,0.08); border-radius:2.75rem;
+      padding:3.125rem 1.5rem; min-height:36.25rem;
+      display:flex; flex-direction:column;
+      transition:all 0.6s cubic-bezier(0.22,1,0.36,1);
+      overflow:hidden; position:relative;
+    }
+    .pricing-card::before {
+      content:''; position:absolute; inset:0; border-radius:inherit;
+      background:linear-gradient(135deg,rgba(255,255,255,0.1) 0%,rgba(255,255,255,0) 50%);
+      pointer-events:none;
+    }
+    .pricing-card:hover {
+      background:rgba(15,15,15,0.6);
+      border-color:rgba(34,211,238,0.7);
+      transform:translateY(-12px) scale(1.01);
+    }
+    @media (max-width:1024px) {
+      .pricing-card { flex:0 0 20rem; scroll-snap-align:center; min-height:32.5rem; padding:2.1875rem 1.25rem; }
+    }
+    .tier-small { font-size:1.1rem; font-weight:400; color:rgba(255,255,255,0.6); text-transform:uppercase; letter-spacing:1px; }
+    .tier-large { font-size:2.8rem; font-weight:500; letter-spacing:-0.02em; color:#fff; margin-top:0.5rem; }
+    .tier-desc  { font-size:0.875rem; color:rgba(255,255,255,0.45); min-height:3.2em; margin-top:1rem; margin-bottom:2.5rem; line-height:1.5; }
+    .tier-list  { list-style:none; margin-bottom:auto; }
+    .tier-list li { display:flex; align-items:flex-start; gap:0.875rem; font-size:0.9125rem; color:rgba(255,255,255,0.8); margin-bottom:1.125rem; line-height:1.4; }
+    .tier-check { width:1.75rem; height:1.75rem; border-radius:50%; background:rgba(255,255,255,0.15); display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .tier-btn {
+      background:#fff; color:#000; padding:0.75rem 2rem; border-radius:9999px;
+      font-weight:600; font-size:0.875rem; margin-top:2rem; border:none; cursor:pointer;
+      align-self:center; transition:all 0.3s cubic-bezier(0.22,1,0.36,1);
+    }
+    .tier-btn:hover { background:#f5f5f5; transform:scale(1.02); box-shadow:0 8px 24px rgba(255,255,255,0.15); }
+
+    /* FEATURES SECTION */
+    .features-section {
+      position:relative; z-index:10;
+      max-width:72rem; margin:0 auto; padding:5rem 1.5rem;
+    }
+    .features-grid {
+      display:grid; grid-template-columns:1fr; gap:1.5rem; margin-top:3rem;
+    }
+    @media (min-width:768px) { .features-grid { grid-template-columns:repeat(3,1fr); } }
+    .feature-card {
+      background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.07);
+      border-radius:1.5rem; padding:2rem;
+      transition:border-color 0.3s, background 0.3s;
+    }
+    .feature-card:hover { border-color:rgba(255,255,255,0.15); background:rgba(255,255,255,0.04); }
+    .feature-icon {
+      width:2.5rem; height:2.5rem; border-radius:0.75rem;
+      background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; margin-bottom:1rem;
+    }
+    .feature-title { font-size:1rem; font-weight:600; margin-bottom:0.5rem; }
+    .feature-body  { font-size:0.875rem; color:rgba(255,255,255,0.5); line-height:1.6; }
+
+    /* FOOTER */
+    footer {
+      position:relative; z-index:10;
+      max-width:72rem; margin:0 auto;
+      padding:2rem 1.5rem 3rem;
+      border-top:1px solid rgba(255,255,255,0.06);
+      display:flex; flex-direction:column; align-items:center; gap:1rem;
+      text-align:center;
+    }
+    .footer-links { display:flex; gap:2rem; flex-wrap:wrap; justify-content:center; }
+    .footer-links a { color:rgba(255,255,255,0.4); font-size:0.8125rem; text-decoration:none; transition:color 0.2s; }
+    .footer-links a:hover { color:#fff; }
+    .footer-copy { color:rgba(255,255,255,0.3); font-size:0.75rem; }
+
+    /* SCROLL REVEAL */
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    /* ===== COUNTDOWN SECTION ===== */
+    @keyframes countPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(34,211,238,0); }
+      50% { box-shadow: 0 0 40px 8px rgba(34,211,238,0.15); }
+    }
+    @keyframes tickFlip {
+      0%   { transform: rotateX(0deg); }
+      50%  { transform: rotateX(-90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+    .countdown-section {
+      position: relative; z-index: 10;
+      padding: 5rem 1.5rem;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center;
+    }
+    .countdown-label {
+      font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.2em;
+      text-transform: uppercase; color: #22d3ee; margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .countdown-label::before,
+    .countdown-label::after {
+      content: ''; flex: 1; max-width: 3rem; height: 1px;
+      background: linear-gradient(to right, transparent, rgba(34,211,238,0.4));
+    }
+    .countdown-label::after { transform: scaleX(-1); }
+    .countdown-title {
+      font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em;
+      color: #fff; margin-bottom: 0.5rem;
+    }
+    @media (min-width: 768px) { .countdown-title { font-size: 2.5rem; } }
+    .countdown-subtitle {
+      font-size: 0.875rem; color: rgba(255,255,255,0.45);
+      margin-bottom: 3rem; max-width: 24rem;
+    }
+    .countdown-grid {
+      display: flex; align-items: center; gap: 0.75rem;
+      flex-wrap: wrap; justify-content: center;
+    }
+    .countdown-unit {
+      display: flex; flex-direction: column; align-items: center; gap: 0.625rem;
+    }
+    .countdown-box {
+      width: 5.5rem; height: 5.5rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 1.25rem;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+      animation: countPulse 4s ease-in-out infinite;
+      transition: border-color 0.3s;
+    }
+    @media (min-width: 768px) { .countdown-box { width: 7rem; height: 7rem; border-radius: 1.5rem; } }
+    .countdown-box::before {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(135deg, rgba(34,211,238,0.05) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .countdown-box:hover { border-color: rgba(34,211,238,0.3); }
+    .countdown-num {
+      font-size: 2.5rem; font-weight: 800; letter-spacing: -0.04em;
+      color: #fff; font-variant-numeric: tabular-nums;
+      transition: transform 0.15s ease;
+    }
+    @media (min-width: 768px) { .countdown-num { font-size: 3.25rem; } }
+    .countdown-num.tick { animation: tickFlip 0.3s ease; }
+    .countdown-unit-label {
+      font-size: 0.625rem; font-weight: 600; letter-spacing: 0.15em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35);
+    }
+    .countdown-sep {
+      font-size: 2rem; font-weight: 300; color: rgba(255,255,255,0.2);
+      margin-bottom: 1.5rem; line-height: 1;
+    }
+    .countdown-badge {
+      margin-top: 2.5rem;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1.25rem; border-radius: 9999px;
+      background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.2);
+      font-size: 0.75rem; color: rgba(255,255,255,0.6);
+    }
+    .countdown-badge .dot-cyan { width: 0.4rem; height: 0.4rem; border-radius: 9999px; background: #22d3ee; animation: pulse-dot 2s infinite; }
+  </style>
+</head>
+<body>
+
+<!-- SVG NOISE FILTER -->
+<svg class="svg-filters">
+  <defs>
+    <filter id="c3-noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0 0.35 0"/>
+      <feComposite in2="SourceGraphic" operator="in" result="noise"/>
+      <feBlend in="SourceGraphic" in2="noise" mode="multiply"/>
+    </filter>
+  </defs>
+</svg>
+
+<!-- FIXED VIDEO BG -->
+<div class="fixed-bg">
+  <video autoplay loop muted playsinline>
+    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4" type="video/mp4"/>
+  </video>
+  <div class="fixed-bg-overlay"></div>
+</div>
+
+<!-- TRACK LINES -->
+<div class="track-line track-left"></div>
+<div class="track-line track-right"></div>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav class="anim-nav">
+  <div class="nav-logo">
+    <!-- LogoMark SVG -->
+    <svg viewBox="0 0 256 256" fill="#ffffff" width="28" height="28">
+      <path d="M 0 128 C 70.692 128 128 185.308 128 256 L 64 256 C 64 220.654 35.346 192 0 192 Z M 256 192 C 220.654 192 192 220.654 192 256 L 128 256 C 128 185.308 185.308 128 256 128 Z M 128 0 C 128 70.692 70.692 128 0 128 L 0 64 C 35.346 64 64 35.346 64 0 Z M 192 0 C 192 35.346 220.654 64 256 64 L 256 128 C 185.308 128 128 70.692 128 0 Z"/>
+    </svg>
+  </div>
+
+  <div class="nav-links">
+    <a href="#pricing">Pricing</a>
+    <a href="#solutions">Features</a>
+  </div>
+
+  <div class="nav-cta">
+    <button class="apple-btn" onclick="document.getElementById('waitlist-form').scrollIntoView({behavior:'smooth'})">
+      <span>Join Waitlist</span>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    </button>
+  </div>
+
+  <button class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle menu">
+    <svg id="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20">
+      <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+    <svg id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="display:none">
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  </button>
+</nav>
+
+<!-- MOBILE DRAWER -->
+<div id="mobile-drawer">
+  <a href="#pricing" class="drawer-link">Pricing</a>
+  <a href="#solutions" class="drawer-link">Features</a>
+  <button class="apple-btn full" onclick="document.getElementById('waitlist-form').scrollIntoView({behavior:'smooth'})">
+    Join Waitlist
+  </button>
+</div>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="hero-tag anim-tag">
+    <span class="dot"></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12">
+      <rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="12" r="4"/>
+    </svg>
+    AI Reward Protocol Active
+  </div>
+
+  <h1 class="anim-h1">
+    COMING SOON ON<br/>
+    <span class="gradient-text">PLAYSTORE &amp; APP STORE</span>
+  </h1>
+
+  <p class="hero-sub anim-p">
+    Noircash leverages powerful edge models to monetize clean telemetry datasets, micro-tasks, and verified premium traffic streams seamlessly.
+  </p>
+
+  <!-- WAITLIST FORM -->
+  <div class="waitlist-form anim-form" id="form-wrap">
+    <form id="waitlist-form" action="https://api.web3forms.com/submit" method="POST">
+      <input type="hidden" name="access_key" value="55f794d3-825a-4f5a-8c8e-58a9d5638d32" />
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <input type="text" name="name" placeholder="Full Name" required />
+        <input type="email" name="email" placeholder="Email Address" required />
+        <button type="submit" class="apple-btn full">
+          Join Waitlist
+        </button>
+      </div>
+    </form>
+    <span class="form-note">Available for Android / iOS Ecosystem Distribution</span>
+  </div>
+</section>
+
+<!-- ===================== MACOS BAR ===================== -->
+<div class="macos-bar anim-bar">
+  <div class="macos-bar-inner">
+    <div class="macos-left">
+      <span class="brand">Noircash</span>
+      <span class="sm">File</span>
+      <span class="sm">Edit</span>
+      <span class="sm">Telemetry</span>
+      <span class="md">Nodes</span>
+    </div>
+    <div class="macos-right">
+      <span class="status-dot">Network Active</span>
+      <span id="clock"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FEATURES SECTION ===================== -->
+<section class="features-section" id="solutions">
+  <div class="eyebrow reveal">
+    <span class="dot"></span>
+    <span class="label">Core Solutions</span>
+    <span class="tag">v2.0</span>
+  </div>
+  <h2 style="font-size:2rem;font-weight:700;letter-spacing:-0.03em;margin-top:1.5rem;text-align:center;" class="reveal">
+    Built for the AI economy
+  </h2>
+  <div class="features-grid">
+    <div class="feature-card reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" width="20" height="20">
+          <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+      </div>
+      <div class="feature-title">Verified AI Traffic</div>
+      <div class="feature-body">Cryptographically verified human interaction streams, segmented by intent, quality, and engagement depth for premium dataset buyers.</div>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" width="20" height="20">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <div class="feature-title">Edge Model Monetization</div>
+      <div class="feature-body">Deploy lightweight inference workloads at the edge and earn passive rewards on every verified computation cycle through our protocol.</div>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" width="20" height="20">
+          <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="feature-title">Premium Micro-tasks</div>
+      <div class="feature-body">Access a curated marketplace of AI training tasks — annotation, RLHF ranking, synthetic data validation — with instant settlement.</div>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" width="20" height="20">
+          <path d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+        </svg>
+      </div>
+      <div class="feature-title">Clean Dataset Pipelines</div>
+      <div class="feature-body">Automated pre-processing, deduplication, and quality scoring pipelines that turn raw telemetry into market-ready training corpora.</div>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" width="20" height="20">
+          <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <div class="feature-title">Real-time Analytics</div>
+      <div class="feature-body">Live dashboards tracking your node performance, reward accumulation, and dataset contribution metrics across the Noircash network.</div>
+    </div>
+    <div class="feature-card reveal">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" width="20" height="20">
+          <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <div class="feature-title">The Noircash Network</div>
+      <div class="feature-body">Join thousands of contributors in a decentralized mesh of data nodes, pooling verified compute and human intelligence at global scale.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COUNTDOWN SECTION ===================== -->
+<section class="countdown-section" id="launch-countdown">
+  <div class="countdown-label">Launch Countdown</div>
+  <h2 class="countdown-title reveal">App is Launching Soon</h2>
+  <p class="countdown-subtitle reveal">Time remaining until the Noircash app goes live</p>
+
+  <div class="countdown-grid reveal">
+    <div class="countdown-unit">
+      <div class="countdown-box">
+        <span class="countdown-num" id="cd-days">00</span>
+      </div>
+      <span class="countdown-unit-label">Days</span>
+    </div>
+
+    <div class="countdown-sep">:</div>
+
+    <div class="countdown-unit">
+      <div class="countdown-box">
+        <span class="countdown-num" id="cd-hours">00</span>
+      </div>
+      <span class="countdown-unit-label">Hours</span>
+    </div>
+
+    <div class="countdown-sep">:</div>
+
+    <div class="countdown-unit">
+      <div class="countdown-box">
+        <span class="countdown-num" id="cd-mins">00</span>
+      </div>
+      <span class="countdown-unit-label">Minutes</span>
+    </div>
+
+    <div class="countdown-sep">:</div>
+
+    <div class="countdown-unit">
+      <div class="countdown-box">
+        <span class="countdown-num" id="cd-secs">00</span>
+      </div>
+      <span class="countdown-unit-label">Seconds</span>
+    </div>
+  </div>
+
+  <div class="countdown-badge reveal">
+    <span class="dot-cyan"></span>
+    <span id="cd-target-display">Loading launch date…</span>
+  </div>
+</section>
+
+<!-- ===================== PRICING SECTION ===================== -->
+<section class="pricing-section" id="pricing">
+
+  <div class="eyebrow reveal">
+    <span class="dot"></span>
+    <span class="label">Pricing</span>
+    <span class="tag">Simple</span>
+  </div>
+
+  <div class="watermark-container reveal">
+    <div class="watermark-main">
+      <span class="watermark-line-1">Choose</span>
+      <span class="watermark-line-2">Your Tier</span>
+    </div>
+  </div>
+
+  <div class="toggle-wrap reveal">
+    <span class="toggle-label">Monthly</span>
+    <button class="toggle-btn" id="billing-toggle" aria-label="Toggle billing period">
+      <div class="toggle-knob"></div>
+    </button>
+    <span class="toggle-label">Yearly <span style="color:#22d3ee;font-size:0.75rem;">(Save 20%)</span></span>
+  </div>
+
+  <div class="pricing-grid">
+    <!-- STARTER -->
+    <div class="pricing-card reveal">
+      <div class="tier-small">Starter</div>
+      <div class="tier-large" id="price-starter">$0<span style="font-size:1rem;font-weight:400;color:rgba(255,255,255,0.5)">/mo</span></div>
+      <div class="tier-desc">For individuals exploring the Noircash protocol and earning their first rewards.</div>
+      <ul class="tier-list">
+        <li>
+          <span class="tier-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Up to 3 active data nodes
+        </li>
+        <li>
+          <span class="tier-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          100 micro-tasks per month
+        </li>
+        <li>
+          <span class="tier-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Basic analytics dashboard
+        </li>
+        <li>
+          <span class="tier-check">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Community support
+        </li>
+      </ul>
+      <button class="tier-btn">Get Started Free</button>
+    </div>
+
+    <!-- PRO -->
+    <div class="pricing-card reveal" style="background:linear-gradient(135deg,rgba(0,0,0,0.85),rgba(0,0,0,0.55));border-color:rgba(34,211,238,0.3);">
+      <div class="tier-small">Pro</div>
+      <div class="tier-large" id="price-pro">$1<span style="font-size:1rem;font-weight:400;color:rgba(255,255,255,0.5)">/mo</span></div>
+      <div class="tier-desc">For power contributors running multiple nodes and maximizing dataset monetization revenue.</div>
+      <ul class="tier-list">
+        <li>
+          <span class="tier-check" style="background:rgba(34,211,238,0.2);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Customer Support 24/7
+        </li>
+        <li>
+          <span class="tier-check" style="background:rgba(34,211,238,0.2);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          High Paying Task
+        </li>
+        <li>
+          <span class="tier-check" style="background:rgba(34,211,238,0.2);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" width="12" height="12"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          Instant Withdrawal
+        </li>
+      </ul>
+      <button class="tier-btn" style="background:linear-gradient(135deg,#22d3ee,#0891b2);color:#fff;">Go Pro</button>
+    </div>
+
+
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="reveal">
+  <svg viewBox="0 0 256 256" fill="rgba(255,255,255,0.3)" width="24" height="24">
+    <path d="M 0 128 C 70.692 128 128 185.308 128 256 L 64 256 C 64 220.654 35.346 192 0 192 Z M 256 192 C 220.654 192 192 220.654 192 256 L 128 256 C 128 185.308 185.308 128 256 128 Z M 128 0 C 128 70.692 70.692 128 0 128 L 0 64 C 35.346 64 64 35.346 64 0 Z M 192 0 C 192 35.346 220.654 64 256 64 L 256 128 C 185.308 128 128 70.692 128 0 Z"/>
+  </svg>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Documentation</a>
+    <a href="#">Status</a>
+    <a href="mailto:12khanarsalan8285@gmail.com">Contact</a>
+  </div>
+  <div class="footer-copy">© 2026 Noircash Inc. All rights reserved. AI Reward Protocol v2.0</div>
+</footer>
+
+<script>
+  // ── MOBILE MENU ──
+  const toggle = document.getElementById('mobile-toggle');
+  const drawer = document.getElementById('mobile-drawer');
+  const iconMenu = document.getElementById('icon-menu');
+  const iconX = document.getElementById('icon-x');
+  let menuOpen = false;
+
+  toggle.addEventListener('click', () => {
+    menuOpen = !menuOpen;
+    drawer.classList.toggle('open', menuOpen);
+    iconMenu.style.display = menuOpen ? 'none' : 'block';
+    iconX.style.display   = menuOpen ? 'block' : 'none';
+  });
+
+  document.querySelectorAll('.drawer-link').forEach(a => {
+    a.addEventListener('click', () => {
+      menuOpen = false;
+      drawer.classList.remove('open');
+      iconMenu.style.display = 'block';
+      iconX.style.display = 'none';
+    });
+  });
+
+  // ── WAITLIST FORM ──
+  document.getElementById('waitlist-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const data = new FormData(this);
+    fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      body: data,
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          document.getElementById('form-wrap').innerHTML = `
+            <div style="padding:1.25rem;border-radius:1rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);backdrop-filter:blur(12px);text-align:center;animation:fadeInUp 0.4s ease both;">
+              <h4 style="font-size:0.875rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.25rem;">Welcome to Elite</h4>
+              <p style="color:rgba(255,255,255,0.5);font-size:0.75rem;">Your transmission parameters have been verified and locked to our network.</p>
+            </div>`;
+        }
+      })
+      .catch(() => {});
+  });
+
+  // ── BILLING TOGGLE ──
+  const billingBtn = document.getElementById('billing-toggle');
+  let isYearly = false;
+  const prices = {
+    starter:    { monthly: '$0',  yearly: '$0'  },
+    pro:        { monthly: '$1',  yearly: '$10' },
+    enterprise: { monthly: '$299', yearly: '$239' },
+  };
+
+  billingBtn.addEventListener('click', () => {
+    isYearly = !isYearly;
+    billingBtn.classList.toggle('active', isYearly);
+    const period = isYearly ? 'yearly' : 'monthly';
+    const mo = isYearly ? '/yr' : '/mo';
+    document.getElementById('price-starter').innerHTML    = prices.starter[period]    + `<span style="font-size:1rem;font-weight:400;color:rgba(255,255,255,0.5)">${mo}</span>`;
+    document.getElementById('price-pro').innerHTML        = prices.pro[period]        + `<span style="font-size:1rem;font-weight:400;color:rgba(255,255,255,0.5)">${mo}</span>`;
+    document.getElementById('price-enterprise').innerHTML = prices.enterprise[period] + `<span style="font-size:1rem;font-weight:400;color:rgba(255,255,255,0.5)">${mo}</span>`;
+  });
+
+  // ── CLOCK ──
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── COUNTDOWN ──
+  (function() {
+    // Default launch date — admin panel se override hoga
+    const storedDate = localStorage.getItem('noircash_launch_date');
+    const launchDate = storedDate ? new Date(storedDate) : new Date('2026-08-01T00:00:00');
+
+    const display = document.getElementById('cd-target-display');
+    if (display) {
+      display.textContent = 'Launch: ' + launchDate.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+    }
+
+    function pad(n) { return String(n).padStart(2,'0'); }
+
+    function animateTick(el) {
+      el.classList.remove('tick');
+      void el.offsetWidth; // reflow
+      el.classList.add('tick');
+    }
+
+    function updateCountdown() {
+      const now = new Date();
+      let diff = launchDate - now;
+      if (diff < 0) diff = 0;
+
+      const totalSecs = Math.floor(diff / 1000);
+      const days  = Math.floor(totalSecs / 86400);
+      const hours = Math.floor((totalSecs % 86400) / 3600);
+      const mins  = Math.floor((totalSecs % 3600) / 60);
+      const secs  = totalSecs % 60;
+
+      const dEl = document.getElementById('cd-days');
+      const hEl = document.getElementById('cd-hours');
+      const mEl = document.getElementById('cd-mins');
+      const sEl = document.getElementById('cd-secs');
+
+      if (dEl && dEl.textContent !== pad(days))  { dEl.textContent = pad(days);  animateTick(dEl); }
+      if (hEl && hEl.textContent !== pad(hours)) { hEl.textContent = pad(hours); animateTick(hEl); }
+      if (mEl && mEl.textContent !== pad(mins))  { mEl.textContent = pad(mins);  animateTick(mEl); }
+      if (sEl && sEl.textContent !== pad(secs))  { sEl.textContent = pad(secs);  animateTick(sEl); }
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  })();
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
