@@ -661,53 +661,19 @@
 </section>
 
 <!-- ===================== COUNTDOWN SECTION ===================== -->
-<section class="countdown-section" id="launch-countdown">
-  <div class="countdown-label">Launch Countdown</div>
-  <h2 class="countdown-title reveal">App is Launching Soon</h2>
-  <p class="countdown-subtitle reveal">Time remaining until the Noircash app goes live</p>
-
-  <div class="countdown-grid reveal">
-    <div class="countdown-unit">
-      <div class="countdown-box">
-        <span class="countdown-num" id="cd-days""00"/span>
-      </div>
-      <span class="countdown-unit-label">Days</"00"span>
-    </div>
-
-    <div class="countdown-sep">:</div>
-
-    <div class="countdown-unit">
-      <div class="countdown-box">
-        <span class="countdown-num" id="cd-hours""00"/span>
-      </div>
-      <span class="countdown-unit-label">Hours</span>
-    </div>
-
-    <div class="countdown-sep">:</div>
-
-    <div class="countdown-unit">
-      <div class="countdown-box">
-        <span class="countdown-num" id="cd-mins""00"/span>
-      </div>
-      <span class="countdown-unit-label">Minutes</span>
-    </div>
-
-    <div class="countdown-sep">:</div>
-
-    <div class="countdown-unit">
-      <div class="countdown-box">
-        <span class="countdown-num" id="cd-secs""00"/span>
-      </div>
-      <span class="countdown-unit-label">Seconds</span>
-    </div>
-  </div>
-
-  <div class="countdown-badge reveal">
-    <span class="dot-cyan"></span>
-    <span id="cd-target-display">Loading launch date…</span>
-  </div>
-</section>
-
+<script>
+const timer = setInterval(function() {
+    if (document.getElementById("days")) {
+        document.getElementById("days").innerHTML = "00";
+        document.getElementById("hours").innerHTML = "00";
+        document.getElementById("minutes").innerHTML = "00";
+        document.getElementById("seconds").innerHTML = "00";
+    } else if (document.getElementById("countdown")) {
+        document.getElementById("countdown").innerHTML = "00 : 00 : 00 : 00";
+    }
+}, 1000);
+</script>
+  
 <!-- ===================== PRICING SECTION ===================== -->
 <section class="pricing-section" id="pricing">
 
