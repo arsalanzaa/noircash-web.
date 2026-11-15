@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://noircash.in/sitemap.txt
+Sitemap: https://noircash.in/sitemap.xml
